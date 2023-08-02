@@ -17,8 +17,12 @@ class Book(Base):
     description = Column(String, nullable=False)
     created_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=text("now()"))
     author_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=True)
-    posted_to_library = Column(Boolean, nullable=False, default=False)
+    library_id=Column(Integer,ForeignKey("library.id"),nullable=True)
+    
     author = relationship("User")
+    library=relationship("Library")
+    
+    
 
 class User(Base):
     __tablename__ = "users"
@@ -26,3 +30,21 @@ class User(Base):
     username = Column(String, nullable=False, unique=True)
     email = Column(String, nullable=False, unique=True)
     password = Column(String, nullable=False)
+
+
+
+
+class Role(Base):
+    __tablename__ ="roles"
+    id=Column(Integer,primary_key=True,nullable=False)
+    name=Column(String,nullable=False,unique=True,default="Borrower")
+    
+    
+
+class User_Role(Base):
+    __tablename__="user_role"
+    id=Column(Integer,primary_key=True,nullable=False)
+    user_id =Column(Integer,ForeignKey("users.id",ondelete="CASCADE"),nullable=False)
+    role_id=Column(Integer,ForeignKey("roles.id"),nullable=False)
+    
+    

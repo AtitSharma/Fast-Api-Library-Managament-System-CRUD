@@ -1,10 +1,11 @@
 from fastapi import status,HTTPException,APIRouter,Depends
 from sqlalchemy.orm import Session
-from app import schema
+from app import authentication, schema
 from app.database import get_db
-from app import utils,models,oauth2
+from app import utils,models
 # from fastapi.security.oauth2 import OAuth2PasswordRequestForm
-
+import sqlalchemy 
+from sqlalchemy import or_,and_
 
 router=APIRouter(
     prefix="/users",
@@ -12,8 +13,11 @@ router=APIRouter(
 
 )
 
+
+
+
 @router.post("/register",status_code=status.HTTP_201_CREATED)
-def register(user:schema.UserRegister,db: Session=Depends(get_db)):
+def register(user:schema.UserRegister,db: Session=Depends(get_db),active_user_exits=Depends(authentication.activeuser)):
     hashed_password=utils.hash(user.password)
     user.password=hashed_password
     new_user=models.User(**dict(user))
@@ -23,6 +27,7 @@ def register(user:schema.UserRegister,db: Session=Depends(get_db)):
     return {"msg":"Successfully Registered Proceed to login "}
 
 
+
 @router.post("/login",status_code=status.HTTP_202_ACCEPTED)
 def login(user_credentials:schema.UserLogin,db : Session=Depends(get_db)):
     user=db.query(models.User).filter(user_credentials.email == models.User.email).first()
@@ -30,8 +35,10 @@ def login(user_credentials:schema.UserLogin,db : Session=Depends(get_db)):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="Invalid User")
     if not utils.verify(user_credentials.password,user.password):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="Incorrect Password")
-    access_token=oauth2.create_access_token(data={"user_id":user.id})
+    access_token=authentication.create_access_token(data={"user_id":user.id})
     return {"token":access_token,"token_type":"bearer"}
+
+
 
 
     
