@@ -45,5 +45,9 @@ class BookDetail(BookCreate):
     
     
     
+class UserRole(BaseModel):
+    user_id:int
+    role_id:int
+    
     
     

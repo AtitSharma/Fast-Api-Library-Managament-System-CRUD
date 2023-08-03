@@ -40,6 +40,21 @@ def login(user_credentials:schema.UserLogin,db : Session=Depends(get_db)):
 
 
 
+@router.delete("/delete/{id}/",status_code=status.HTTP_200_OK)
+def delete_user(id:int,db:Session=Depends(get_db),
+                current_user=Depends(authentication.get_current_user),
+                isadmin=Depends(authentication.isadmin)):
+    
+    user=db.query(models.User).filter(models.User.id==id)
+    if not user.first():
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,detail="No Such User Found")
+    user.delete(synchronize_session=False)
+    db.commit()
+    return {"msg":"Deleted User Successfully"}
+    
+
+
+
 
     
     

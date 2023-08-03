@@ -1,5 +1,5 @@
 from app.database import Base
-from sqlalchemy import Integer, Column, String, Boolean, ForeignKey
+from sqlalchemy import Integer, Column, String, Boolean, ForeignKey,UniqueConstraint
 from sqlalchemy.sql.sqltypes import TIMESTAMP
 from sqlalchemy.sql.expression import text
 from sqlalchemy.orm import relationship
@@ -18,7 +18,6 @@ class Book(Base):
     created_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=text("now()"))
     author_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=True)
     library_id=Column(Integer,ForeignKey("library.id"),nullable=True)
-    
     author = relationship("User")
     library=relationship("Library")
     
@@ -46,5 +45,6 @@ class User_Role(Base):
     id=Column(Integer,primary_key=True,nullable=False)
     user_id =Column(Integer,ForeignKey("users.id",ondelete="CASCADE"),nullable=False)
     role_id=Column(Integer,ForeignKey("roles.id"),nullable=False)
+    __table_args__ = (UniqueConstraint('user_id', 'role_id', name='_user_role_uc'),)
     
     

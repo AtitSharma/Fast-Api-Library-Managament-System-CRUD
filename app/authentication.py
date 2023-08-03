@@ -58,7 +58,8 @@ def activeuser(user: schema.UserRegister, db: Session = Depends(get_db)):
 
 def active_book(id:int,db: Session= Depends(get_db),current_user=Depends(get_current_user)):
     
-    ''' IF THE REQUEST USER IS THE BOOK AUTHOR OR NOT ,
+    ''' 
+    IF THE REQUEST USER IS THE BOOK AUTHOR OR NOT ,
     
         AND IF THE BOOK EXITS OR NOT '''
     
@@ -69,12 +70,46 @@ def active_book(id:int,db: Session= Depends(get_db),current_user=Depends(get_cur
     return 
     
     
+    
+def check_unique_fields(roles:schema.UserRole,db : Session = Depends(get_db)):
+    '''
+        THIS IS DONE TO THROW ERROR IF THE USER GETS THE SAME ROLE 2 TIMES
+    '''
+    user_role=db.query(models.User_Role).filter(and_(models.User_Role.role_id==roles.role_id,models.User_Role.user_id==roles.user_id)).first()
+    if user_role:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="User Already have Such Role")
+    
+
+def give_role_to_user(
+            roles:schema.UserRole,
+            db : Session = Depends(get_db),
+            current_user=Depends(get_current_user)):
+    '''
+        THIS IS DONE TO THROW ERROR IF THE USER DOESNT EXITS 
+    '''
+    user=db.query(models.User).filter(models.User.id==roles.user_id).first()
+    
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="No such user Found")
 
 
 
 
-
-
+def isadmin(db:Session=Depends(get_db),current_user=Depends(get_current_user)):
+    '''
+        THIS IS TO THROW ERROR IF THE REQUEST.USER IS NOT ADMIN
+    '''
+    admin_=db.query(models.Role).filter(models.Role.name=="admin").first()
+    if not admin_:
+        admin_=models.Role(name="admin")
+        db.add(admin_)
+        db.commit()
+        db.refresh(admin_)
+        admin_=db.query(models.Role).filter(models.Role.name=="admin").first()
+    admin_id=admin_.id 
+    permission=db.query(models.User_Role).filter(and_(models.User_Role.user_id==current_user.id,models.User_Role.role_id==admin_id)).first()
+    if not permission:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,detail="You arent Admin")
 
 
 
