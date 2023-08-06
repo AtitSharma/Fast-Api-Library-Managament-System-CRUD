@@ -1,61 +1,49 @@
-from fastapi import status,HTTPException,APIRouter,Depends
+from fastapi import status, HTTPException, APIRouter, Depends
 from sqlalchemy.orm import Session
 from app import authentication, schema
 from app.database import get_db
-from app import utils,models
+from app import utils, models
 # from fastapi.security.oauth2 import OAuth2PasswordRequestForm
-import sqlalchemy 
-from sqlalchemy import or_,and_
+# import sqlalchemy
+# from sqlalchemy import or_, and_
 
-router=APIRouter(
+router = APIRouter(
     prefix="/users",
     tags=["Users"]
 
 )
 
 
-
-
-@router.post("/register",status_code=status.HTTP_201_CREATED)
-def register(user:schema.UserRegister,db: Session=Depends(get_db),active_user_exits=Depends(authentication.activeuser)):
-    hashed_password=utils.hash(user.password)
-    user.password=hashed_password
-    new_user=models.User(**dict(user))
+@router.post("/register", status_code=status.HTTP_201_CREATED)
+def register(user: schema.UserRegister, db: Session = Depends(get_db),
+             active_user_exits=Depends(authentication.activeuser)):
+    hashed_password = utils.hash(user.password)
+    user.password = hashed_password
+    new_user = models.User(**dict(user))
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
-    return {"msg":"Successfully Registered Proceed to login "}
+    return {"msg": "Successfully Registered Proceed to login "}
 
 
-
-@router.post("/login",status_code=status.HTTP_202_ACCEPTED)
-def login(user_credentials:schema.UserLogin,db : Session=Depends(get_db)):
-    user=db.query(models.User).filter(user_credentials.email == models.User.email).first()
+@router.post("/login", status_code=status.HTTP_202_ACCEPTED)
+def login(user_credentials: schema.UserLogin, db: Session = Depends(get_db)):
+    user = db.query(models.User).filter(user_credentials.email == models.User.email).first()
     if not user:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="Invalid User")
-    if not utils.verify(user_credentials.password,user.password):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="Incorrect Password")
-    access_token=authentication.create_access_token(data={"user_id":user.id})
-    return {"token":access_token,"token_type":"bearer"}
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid User")
+    if not utils.verify(user_credentials.password, user.password):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Incorrect Password")
+    access_token = authentication.create_access_token(data={"user_id": user.id})
+    return {"token": access_token, "token_type": "bearer"}
 
 
-
-@router.delete("/delete/{id}/",status_code=status.HTTP_200_OK)
-def delete_user(id:int,db:Session=Depends(get_db),
+@router.delete("/delete/{id}/", status_code=status.HTTP_200_OK)
+def delete_user(id: int, db: Session = Depends(get_db),
                 current_user=Depends(authentication.get_current_user),
                 isadmin=Depends(authentication.isadmin)):
-    
-    user=db.query(models.User).filter(models.User.id==id)
+    user = db.query(models.User).filter(models.User.id == id)
     if not user.first():
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,detail="No Such User Found")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No Such User Found")
     user.delete(synchronize_session=False)
     db.commit()
-    return {"msg":"Deleted User Successfully"}
-    
-
-
-
-
-    
-    
-    
+    return {"msg": "Deleted User Successfully"}
