@@ -1,7 +1,9 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr,ConfigDict
 from typing import Optional
 from datetime import datetime
+from typing import Type,Any,TypeVar
 
+T=TypeVar("T")
 
 class UserRegister(BaseModel):
     username: str
@@ -12,6 +14,12 @@ class UserRegister(BaseModel):
 class UserLogin(BaseModel):
     email: EmailStr
     password: str
+    
+    
+class UserDetails(BaseModel):
+    email: EmailStr
+    username:str
+    
 
 
 class Token(BaseModel):
@@ -32,6 +40,7 @@ class TokenData(BaseModel):
 class BookCreate(BaseModel):
     title: str
     description: str
+    
 
 
 class BookDetail(BookCreate):
@@ -47,3 +56,19 @@ class UserRole(BaseModel):
 
 class RoleCreate(BaseModel):
     name: str
+       
+class Rolename(BaseModel):
+    name : str
+
+class StatusSchema(BaseModel):
+    code:str | None
+    status: str | None
+    data: T | None
+    message : str | None
+    
+    
+
+
+        
+    
+    

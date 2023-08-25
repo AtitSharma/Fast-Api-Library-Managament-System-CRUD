@@ -20,7 +20,6 @@ def create_access_token(data: dict):
     expires = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expires})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-
     return encoded_jwt
 
 
@@ -50,15 +49,25 @@ def activeuser(user: schema.UserRegister, db: Session = Depends(get_db)):
     active_user = db.query(models.User).filter(
         or_(models.User.username == user.username, models.User.email == user.email)).first()
     if active_user:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Aleady Exits Such User")
+        validation=schema.StatusSchema(
+            code="404",
+            status="Failed",
+            data= [],
+            message="User Already Exits"     
+        )
+        raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=validation.__dict__,
+                        )
     return
 
 
 def active_book(id: int, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+    
     '''
     IF THE REQUEST USER IS THE BOOK AUTHOR OR NOT ,
-    
-        AND IF THE BOOK EXITS OR NOT '''
+        AND IF THE BOOK EXITS OR NOT 
+    '''
 
     updated_book = db.query(models.Book).filter(models.Book.id == id)
     if not updated_book.first():
@@ -139,3 +148,33 @@ def check_user(db: Session = Depends(database.get_db),
         return 
     raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Sorry You Dont Have such Permission ")
 
+
+
+
+def check_role_name(role_name:schema.Rolename,db: Session = Depends(database.get_db)):
+    
+    '''
+        THIS IS TO CREATE A ADMIN ROLE IN THE DB
+    '''
+    if str(role_name.name).lower() == "admin":
+        raise HTTPException("Cannot Delete The Admin Role")
+    role=db.query(models.Role).filter(models.Role.name==str(role_name.name).lower()).first()
+    if not role:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,detail=f"No Such role with {role_name.name} exits")
+    return 
+
+
+
+
+def create_borrower_role(db: Session = Depends(database.get_db)):
+    
+    '''
+        THIS WILL CREATE A BORROWER ROLE IN DATABASE
+    '''
+    
+    role_=db.query(models.Role).filter(models.Role.name=="borrower").first()
+    if not role_:
+        new_role=models.Role(name="borrower")
+        db.add(new_role)
+        db.commit()
+    

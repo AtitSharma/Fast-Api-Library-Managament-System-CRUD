@@ -31,6 +31,7 @@ def give_role(roles: schema.UserRole,
 @router.post("/createrole")
 def create_role(role: schema.RoleCreate,
                 db: Session = Depends(get_db),
+                current_user=Depends(authentication.get_current_user),
                 isadmin=Depends(authentication.isadmin),
                 check_role=Depends(authentication.check_role)):
     '''
@@ -44,6 +45,29 @@ def create_role(role: schema.RoleCreate,
     db.commit()
     db.refresh(new_role)
     return {"Successfully Created Role ": new_role}
+
+
+@router.delete("/deleterole/")
+def delete_role(role_name:schema.Rolename,
+                db: Session=Depends(get_db),
+                current_user=Depends(authentication.get_current_user),
+                is_admin=Depends(authentication.isadmin),
+                active_role=Depends(authentication.check_role_name),  
+                ):
+    
+    '''
+        THIS IS TO DELETE ROLES FROM THE DATABASE
+    '''
+    
+    role=db.query(models.Role).filter(models.Role.name == str(role_name.name).lower())
+    role.delete(synchronize_session=False)
+    db.commit()
+    return {"msg":f"Successfully Deleted The Role "}
+
+
+
+
+    
 
 
 

@@ -10,7 +10,11 @@ router = APIRouter(
 )
 
 
-@router.post("/", status_code=status.HTTP_201_CREATED, response_model=schema.BookCreate)
+@router.post("/", status_code=status.HTTP_201_CREATED, 
+             response_model=schema.BookCreate 
+             ,summary="Book Can be Created Frome Here"
+             ,description="Creates a new book in the library.",
+             ) 
 def create_book(book: schema.BookCreate, db: Session = Depends(database.get_db),
                 current_user=Depends(authentication.get_current_user)):
     user = db.query(models.User).filter(models.User.id == current_user.id).first()
@@ -38,7 +42,8 @@ def delete_book(id: int, db: Session = Depends(database.get_db),
 def update_book(id: int, book: schema.BookCreate,
                 db: Session = Depends(database.get_db),
                 current_user=Depends(authentication.get_current_user),
-                active_book=Depends(authentication.active_book)):
+                active_book=Depends(authentication.active_book),
+                permission=Depends(authentication.check_user)):
     book_query = db.query(models.Book).filter(models.Book.id == id)
     book_query.update(dict(book), synchronize_session=False)
     db.commit()
